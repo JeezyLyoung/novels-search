@@ -6,10 +6,15 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="header">
+    {% if is_login %}
+    {% include "login.html" %}
+    {% else %}
     <div class="login">
         <a class="btn btn-primary pull-right" href="#" role="button" data-toggle="modal" data-target="#login">登录</a>
     </div>
+    {% endif %}
 </div>
 <div class="container">
     <form action="/search" method="get">

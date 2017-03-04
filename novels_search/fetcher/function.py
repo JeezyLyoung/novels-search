@@ -6,10 +6,9 @@ import os
 
 from bs4 import BeautifulSoup
 from aiocache.serializers import PickleSerializer
-from aiocache import RedisCache
 from aiocache.log import logger
 from aiocache.utils import get_args_dict, get_cache
-from novels_search.config import USER_AGENT, RULES, LOGGER, REDIS_DICT
+from novels_search.config import USER_AGENT, RULES, LOGGER
 
 
 def get_data(filename, default=''):
@@ -51,7 +50,10 @@ async def target_fetch(client, url):
             async with client.get(url, headers=headers) as response:
                 assert response.status == 200
                 LOGGER.info('Task url: {}'.format(response.url))
-                text = await response.text()
+                try:
+                    text = await response.text()
+                except:
+                    text = await response.read()
                 return text
         except Exception as e:
             LOGGER.exception(e)
@@ -113,8 +115,7 @@ def cached(
     return cached_decorator
 
 
-@cached(cache=RedisCache, key_from_attr='url', serializer=PickleSerializer(),
-        endpoint=REDIS_DICT.get('REDIS_ENDPOINT', None), port=REDIS_DICT.get('REDIS_PORT', None), namespace="main")
+@cached(key_from_attr='url', serializer=PickleSerializer(), namespace="main")
 async def cache_owllook_novels_content(url, netloc):
     async with aiohttp.ClientSession() as client:
         html = await target_fetch(client=client, url=url)
@@ -131,8 +132,7 @@ async def cache_owllook_novels_content(url, netloc):
         return None
 
 
-@cached(ttl=1800, cache=RedisCache, key_from_attr='url', serializer=PickleSerializer(),
-        endpoint=REDIS_DICT.get('REDIS_ENDPOINT', None), port=REDIS_DICT.get('REDIS_PORT', None), namespace="main")
+@cached(ttl=3600, key_from_attr='url', serializer=PickleSerializer(), namespace="main")
 async def cache_owllook_novels_chapter(url, netloc):
     async with aiohttp.ClientSession() as client:
         html = await target_fetch(client=client, url=url)
